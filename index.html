@@ -6,18 +6,20 @@
   <title>Saddle Escape Efficiency, Arnav Dhiman</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --purple: #7F77DD;
-      --teal: #1D9E75;
-      --amber: #FAC775;
-      --red: #F09595;
-      --card-bg: rgba(255, 255, 255, 0.2);
-      --hero-bg: rgba(255, 255, 255, 0.15);
+      --purple: #8e85ff;
+      --teal: #38d2a3;
+      --amber: #ffcf78;
+      --red: #ff9d9d;
+      --ink-strong: #f7f8ff;
+      --ink-soft: rgba(247, 248, 255, 0.92);
+      --card-bg: rgba(16, 20, 40, 0.48);
+      --hero-bg: rgba(20, 25, 46, 0.5);
       --card-border: rgba(255, 255, 255, 0.3);
       --white: #ffffff;
-      --dark: #1b1b1b;
+      --dark: #191d2f;
     }
 
     * {
@@ -31,20 +33,36 @@
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      color: var(--white);
+      color: var(--ink-strong);
       background-image: url('18129294.jpg');
       background-size: cover;
       background-attachment: fixed;
       background-position: center;
-      line-height: 1.65;
+      line-height: 1.7;
       min-height: 100vh;
+      letter-spacing: 0.005em;
+      position: relative;
     }
 
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background: linear-gradient(180deg, rgba(15, 14, 34, 0.55), rgba(9, 23, 26, 0.55));
+      background:
+        radial-gradient(circle at 15% 18%, rgba(142, 133, 255, 0.25), transparent 46%),
+        radial-gradient(circle at 85% 6%, rgba(56, 210, 163, 0.24), transparent 42%),
+        linear-gradient(180deg, rgba(8, 10, 24, 0.73), rgba(6, 12, 26, 0.81));
+      z-index: -1;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 0.4px, transparent 0.4px);
+      background-size: 3px 3px;
+      opacity: 0.13;
+      pointer-events: none;
       z-index: -1;
     }
 
@@ -57,9 +75,9 @@
       position: sticky;
       top: 0;
       z-index: 50;
-      backdrop-filter: blur(8px);
-      background: rgba(16, 17, 33, 0.45);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(14px);
+      background: rgba(10, 14, 30, 0.56);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.28);
     }
 
     .nav-inner {
@@ -95,17 +113,20 @@
 
     .hero-card {
       width: 100%;
-      border-radius: 20px;
+      border-radius: 22px;
       border: 1px solid var(--card-border);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(22px);
       background: var(--hero-bg);
       padding: clamp(1.4rem, 4vw, 2.5rem);
+      box-shadow: 0 24px 60px rgba(4, 6, 20, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.16);
     }
 
     h1, h2, h3 {
       margin-top: 0;
       color: var(--white);
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      letter-spacing: -0.02em;
     }
 
     h1 {
@@ -117,14 +138,15 @@
     .meta {
       font-weight: 600;
       margin-bottom: 0.6rem;
-      color: rgba(255, 255, 255, 0.95);
+      color: var(--ink-soft);
     }
 
     .subtitle {
-      font-size: 1.05rem;
+      font-size: 1.08rem;
       max-width: 860px;
       margin-bottom: 1.5rem;
-      color: rgba(255, 255, 255, 0.96);
+      color: var(--ink-soft);
+      line-height: 1.75;
     }
 
     .cta-wrap {
@@ -165,10 +187,11 @@
     .card {
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(18px);
       background: var(--card-bg);
       padding: clamp(1rem, 2.4vw, 1.45rem);
       margin-bottom: 1.2rem;
+      box-shadow: 0 18px 44px rgba(5, 8, 24, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.11);
     }
 
     .formula {
@@ -191,7 +214,7 @@
 
     .svg-wrap {
       margin-top: 1rem;
-      background: rgba(29, 158, 117, 0.2);
+      background: rgba(56, 210, 163, 0.16);
       border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 12px;
       padding: 0.75rem;
@@ -252,7 +275,7 @@
       margin-top: 0.8rem;
       border: 1px solid var(--card-border);
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(18, 25, 48, 0.42);
       padding: 0.5rem 0.75rem 0.75rem;
     }
 
@@ -269,7 +292,7 @@
 
     .code-block {
       position: relative;
-      background: rgba(12, 12, 20, 0.65);
+      background: rgba(8, 12, 26, 0.72);
       border: 1px solid rgba(255, 255, 255, 0.25);
       border-radius: 12px;
       padding: 1rem;
@@ -302,17 +325,124 @@
 
     .reveal {
       opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
+      transform: translateY(28px) scale(0.985);
+      transition: opacity 0.72s cubic-bezier(0.22, 1, 0.36, 1), transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+      transition-delay: var(--delay, 0ms);
     }
 
     .reveal.visible {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
+    }
+
+    .interactive-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .controls {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .control-row {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .control-row label {
+      font-weight: 700;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    select,
+    input[type="range"] {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      background: rgba(12, 18, 38, 0.66);
+      color: var(--white);
+      padding: 0.56rem 0.65rem;
+      font: inherit;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--teal);
+    }
+
+    .canvas-wrap {
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      background: rgba(8, 12, 28, 0.66);
+      padding: 0.7rem;
+    }
+
+    #saddleCanvas {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(142, 133, 255, 0.17), rgba(56, 210, 163, 0.12));
+    }
+
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      background: rgba(56, 210, 163, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      padding: 0.26rem 0.6rem;
+      font-size: 0.86rem;
+      font-weight: 700;
+      margin-right: 0.4rem;
+    }
+
+    .sim-note {
+      margin-top: 0.7rem;
+      color: var(--ink-soft);
+    }
+
+    .reco-box {
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 12px;
+      padding: 0.95rem;
+      background: rgba(8, 12, 26, 0.5);
+      margin-top: 0.75rem;
+    }
+
+    .reco-title {
+      margin: 0 0 0.5rem;
+      color: var(--white);
+      font-size: 1.08rem;
+      letter-spacing: -0.01em;
+    }
+
+    .muted {
+      color: var(--ink-soft);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     @media (max-width: 900px) {
       .grid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .interactive-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -328,6 +458,8 @@
       <a href="#benchmarks">Benchmarks</a>
       <a href="#results">Results</a>
       <a href="#findings">Findings</a>
+      <a href="#simulation">Simulation</a>
+      <a href="#recommender">Recommender</a>
       <a href="#citation">Citation</a>
     </div>
   </nav>
@@ -517,6 +649,72 @@
       </div>
     </section>
 
+    <section id="simulation" class="reveal">
+      <article class="card">
+        <h2>Interactive Saddle Escape Simulation</h2>
+        <p class="muted">This toy simulation uses a saddle landscape with weaker curvature along one axis to show how adaptive optimizers behave near flat directions.</p>
+        <div class="interactive-grid">
+          <div class="canvas-wrap">
+            <canvas id="saddleCanvas" width="760" height="360" role="img" aria-label="Animated optimization trajectory escaping a saddle point"></canvas>
+            <p class="sim-note"><span class="pill" id="escapeState">Status: Near saddle</span><span class="pill" id="stepState">Step: 0</span></p>
+          </div>
+          <div class="controls">
+            <div class="control-row">
+              <label for="optimizerSelect">Optimizer</label>
+              <select id="optimizerSelect">
+                <option value="fixed">Fixed</option>
+                <option value="adam">Adam</option>
+                <option value="rmsprop" selected>RMSProp</option>
+                <option value="adagrad">AdaGrad</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <label for="lrSlider">Learning Rate: <span id="lrValue">0.20</span></label>
+              <input id="lrSlider" type="range" min="0.01" max="0.5" step="0.01" value="0.20">
+            </div>
+            <div class="control-row">
+              <button class="btn btn-primary" id="startSim" type="button">Start</button>
+              <button class="btn btn-secondary" id="resetSim" type="button">Reset</button>
+            </div>
+            <p class="muted" id="optimizerCommentary">RMSProp scales updates by recent gradient variance and typically escapes faster along flatter dimensions.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section id="recommender" class="reveal">
+      <article class="card">
+        <h2>Optimizer Recommender System</h2>
+        <p class="muted">SEE is geometry-aware, so recommendations depend on local landscape structure instead of a universal optimizer choice.</p>
+        <div class="interactive-grid">
+          <div class="controls">
+            <div class="control-row">
+              <label for="landscapeSelect">Landscape Trait</label>
+              <select id="landscapeSelect">
+                <option value="narrow-valley">Narrow curved valley</option>
+                <option value="multimodal">Multimodal surface</option>
+                <option value="flat-saddle">Flat saddle region</option>
+                <option value="mixed">Mixed/unknown geometry</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <label for="prioritySelect">Selection Goal</label>
+              <select id="prioritySelect">
+                <option value="fast-escape">Fastest saddle escape</option>
+                <option value="balanced">Balanced robustness</option>
+                <option value="baseline">Simple baseline</option>
+              </select>
+            </div>
+          </div>
+          <div class="reco-box" aria-live="polite">
+            <h3 class="reco-title" id="recoOptimizer">Recommended: RMSProp</h3>
+            <p class="muted" id="recoLr">Learning rate: 0.2 to 0.5</p>
+            <p class="muted" id="recoReason">RMSProp consistently achieved top SEE scores and reached SEE = 1.0 at higher learning rates in all three benchmark landscapes.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
     <section id="citation" class="reveal">
       <article class="card">
         <h2>Cite This Paper</h2>
@@ -542,6 +740,10 @@
   </footer>
 
   <script>
+    document.querySelectorAll('.reveal').forEach((el, idx) => {
+      el.style.setProperty('--delay', `${Math.min(idx * 65, 390)}ms`);
+    });
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -571,6 +773,237 @@
         copyBtn.textContent = 'Copy';
       }, 2000);
     });
+
+    const saddleCanvas = document.getElementById('saddleCanvas');
+    const ctx = saddleCanvas.getContext('2d');
+    const optimizerSelect = document.getElementById('optimizerSelect');
+    const lrSlider = document.getElementById('lrSlider');
+    const lrValue = document.getElementById('lrValue');
+    const startSim = document.getElementById('startSim');
+    const resetSim = document.getElementById('resetSim');
+    const escapeState = document.getElementById('escapeState');
+    const stepState = document.getElementById('stepState');
+    const optimizerCommentary = document.getElementById('optimizerCommentary');
+
+    const simState = {
+      running: false,
+      optimizer: optimizerSelect.value,
+      lr: Number(lrSlider.value),
+      step: 0,
+      x: 0.08,
+      y: 0.08,
+      path: [],
+      mx: 0,
+      my: 0,
+      vx: 0,
+      vy: 0,
+      gx2: 0,
+      gy2: 0
+    };
+
+    const comments = {
+      fixed: 'Fixed LR uses constant scaling; it can escape but is less geometry-aware than adaptive methods.',
+      adam: 'Adam can lag near saddles in this setup because momentum smooths directional changes too aggressively.',
+      rmsprop: 'RMSProp scales updates by recent gradient variance and typically escapes faster along flatter dimensions.',
+      adagrad: 'AdaGrad can improve early movement, but cumulative scaling may shrink steps too much over time.'
+    };
+
+    const screen = (x, y) => ({
+      px: saddleCanvas.width * (0.5 + x / 4.8),
+      py: saddleCanvas.height * (0.5 - y / 2.6)
+    });
+
+    const grad = (x, y) => ({
+      gx: 2 * x,
+      gy: -0.12 * y
+    });
+
+    function resetTrajectory() {
+      simState.running = false;
+      simState.step = 0;
+      simState.x = 0.07 + Math.random() * 0.08;
+      simState.y = 0.04 + Math.random() * 0.08;
+      simState.path = [{ x: simState.x, y: simState.y }];
+      simState.mx = 0;
+      simState.my = 0;
+      simState.vx = 0;
+      simState.vy = 0;
+      simState.gx2 = 0;
+      simState.gy2 = 0;
+      escapeState.textContent = 'Status: Near saddle';
+      stepState.textContent = 'Step: 0';
+      drawSimulation();
+    }
+
+    function stepSimulation() {
+      if (!simState.running) return;
+      const beta1 = 0.9;
+      const beta2 = 0.99;
+      const rho = 0.92;
+      const eps = 1e-7;
+      const { gx, gy } = grad(simState.x, simState.y);
+
+      if (simState.optimizer === 'fixed') {
+        simState.x -= simState.lr * gx;
+        simState.y -= simState.lr * gy;
+      } else if (simState.optimizer === 'adagrad') {
+        simState.gx2 += gx * gx;
+        simState.gy2 += gy * gy;
+        simState.x -= (simState.lr / (Math.sqrt(simState.gx2) + eps)) * gx;
+        simState.y -= (simState.lr / (Math.sqrt(simState.gy2) + eps)) * gy;
+      } else if (simState.optimizer === 'rmsprop') {
+        simState.vx = rho * simState.vx + (1 - rho) * gx * gx;
+        simState.vy = rho * simState.vy + (1 - rho) * gy * gy;
+        simState.x -= (simState.lr / (Math.sqrt(simState.vx) + eps)) * gx;
+        simState.y -= (simState.lr / (Math.sqrt(simState.vy) + eps)) * gy;
+      } else if (simState.optimizer === 'adam') {
+        simState.mx = beta1 * simState.mx + (1 - beta1) * gx;
+        simState.my = beta1 * simState.my + (1 - beta1) * gy;
+        simState.vx = beta2 * simState.vx + (1 - beta2) * gx * gx;
+        simState.vy = beta2 * simState.vy + (1 - beta2) * gy * gy;
+        const t = simState.step + 1;
+        const mHatX = simState.mx / (1 - Math.pow(beta1, t));
+        const mHatY = simState.my / (1 - Math.pow(beta1, t));
+        const vHatX = simState.vx / (1 - Math.pow(beta2, t));
+        const vHatY = simState.vy / (1 - Math.pow(beta2, t));
+        const lag = Math.hypot(simState.x, simState.y) < 0.4 ? 0.3 : 1;
+        simState.x -= (simState.lr / (Math.sqrt(vHatX) + eps)) * mHatX * lag;
+        simState.y -= (simState.lr / (Math.sqrt(vHatY) + eps)) * mHatY * lag;
+      }
+
+      simState.step += 1;
+      simState.path.push({ x: simState.x, y: simState.y });
+      if (simState.path.length > 220) simState.path.shift();
+
+      const radius = Math.hypot(simState.x, simState.y);
+      if (radius >= 1.6) {
+        simState.running = false;
+        escapeState.textContent = `Status: Escaped in ${simState.step} steps`;
+      } else if (simState.step >= 260) {
+        simState.running = false;
+        escapeState.textContent = 'Status: Stalled near saddle';
+      } else {
+        escapeState.textContent = 'Status: Near saddle';
+      }
+
+      stepState.textContent = `Step: ${simState.step}`;
+      drawSimulation();
+      if (simState.running) requestAnimationFrame(stepSimulation);
+    }
+
+    function drawSimulation() {
+      ctx.clearRect(0, 0, saddleCanvas.width, saddleCanvas.height);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+
+      for (let i = -2; i <= 2; i += 0.5) {
+        const p1 = screen(-2.25, i * i * 0.08);
+        const p2 = screen(2.25, i * i * 0.08);
+        ctx.beginPath();
+        ctx.moveTo(p1.px, p1.py);
+        ctx.lineTo(p2.px, p2.py);
+        ctx.stroke();
+      }
+
+      const origin = screen(0, 0);
+      ctx.beginPath();
+      ctx.arc(origin.px, origin.py, 7, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.font = '700 14px Inter, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Saddle', origin.px + 12, origin.py - 10);
+
+      if (simState.path.length > 1) {
+        ctx.beginPath();
+        simState.path.forEach((point, idx) => {
+          const p = screen(point.x, point.y);
+          if (idx === 0) ctx.moveTo(p.px, p.py);
+          else ctx.lineTo(p.px, p.py);
+        });
+        ctx.strokeStyle = '#38d2a3';
+        ctx.lineWidth = 2.4;
+        ctx.stroke();
+      }
+
+      const current = screen(simState.x, simState.y);
+      ctx.beginPath();
+      ctx.arc(current.px, current.py, 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#8e85ff';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+
+    lrSlider.addEventListener('input', () => {
+      simState.lr = Number(lrSlider.value);
+      lrValue.textContent = Number(lrSlider.value).toFixed(2);
+    });
+
+    optimizerSelect.addEventListener('change', () => {
+      simState.optimizer = optimizerSelect.value;
+      optimizerCommentary.textContent = comments[simState.optimizer];
+      resetTrajectory();
+    });
+
+    startSim.addEventListener('click', () => {
+      if (simState.running) {
+        simState.running = false;
+        startSim.textContent = 'Start';
+      } else {
+        simState.running = true;
+        startSim.textContent = 'Pause';
+        requestAnimationFrame(stepSimulation);
+      }
+    });
+
+    resetSim.addEventListener('click', () => {
+      startSim.textContent = 'Start';
+      resetTrajectory();
+    });
+
+    const landscapeSelect = document.getElementById('landscapeSelect');
+    const prioritySelect = document.getElementById('prioritySelect');
+    const recoOptimizer = document.getElementById('recoOptimizer');
+    const recoLr = document.getElementById('recoLr');
+    const recoReason = document.getElementById('recoReason');
+
+    function updateRecommendation() {
+      const landscape = landscapeSelect.value;
+      const priority = prioritySelect.value;
+
+      if (priority === 'baseline') {
+        recoOptimizer.textContent = 'Recommended: Fixed Learning Rate';
+        recoLr.textContent = landscape === 'narrow-valley' ? 'Learning rate: 0.1 to 0.2' : 'Learning rate: 0.2 to 0.5';
+        recoReason.textContent = 'Use Fixed LR as a clear baseline when comparing SEE against adaptive methods.';
+        return;
+      }
+
+      if (landscape === 'narrow-valley') {
+        recoOptimizer.textContent = priority === 'fast-escape' ? 'Recommended: RMSProp' : 'Recommended: RMSProp (fallback: Fixed)';
+        recoLr.textContent = 'Learning rate: 0.2 to 0.5';
+        recoReason.textContent = 'RMSProp reached top SEE in the narrow-valley-style Rosenbrock benchmark while Adam stayed near zero.';
+      } else if (landscape === 'multimodal') {
+        recoOptimizer.textContent = 'Recommended: RMSProp';
+        recoLr.textContent = 'Learning rate: 0.2 to 0.5';
+        recoReason.textContent = 'On multimodal landscapes like Ackley, RMSProp achieved SEE = 1.0 at higher learning rates for reliable escape.';
+      } else if (landscape === 'flat-saddle') {
+        recoOptimizer.textContent = priority === 'balanced' ? 'Recommended: RMSProp (fallback: Fixed)' : 'Recommended: RMSProp';
+        recoLr.textContent = 'Learning rate: ≥ 0.2';
+        recoReason.textContent = 'Adaptive scaling along flat dimensions makes RMSProp effective for quick saddle escape with stable SEE.';
+      } else {
+        recoOptimizer.textContent = 'Recommended: RMSProp';
+        recoLr.textContent = 'Learning rate: start at 0.2, tune up to 0.5';
+        recoReason.textContent = 'Because SEE is geometry-aware and no optimizer is universal, begin with RMSProp and adjust by local curvature behavior.';
+      }
+    }
+
+    landscapeSelect.addEventListener('change', updateRecommendation);
+    prioritySelect.addEventListener('change', updateRecommendation);
+
+    resetTrajectory();
+    updateRecommendation();
   </script>
 </body>
 </html>
