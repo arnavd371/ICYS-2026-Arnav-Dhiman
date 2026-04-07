@@ -16,7 +16,10 @@ const TRAIL_LIMIT = 180;
 const DAMPING_RADIUS_THRESHOLD = 0.6;
 const DAMPING_SCALE = 0.35;
 const RESET_JITTER_RATIO = 0.05;
-const FINITE_DIFF_STEP = 1e-3; // balances gradient stability with responsive animation
+const FINITE_DIFF_STEP = 1e-3; // Ackley numeric gradient step for stable, responsive animation
+const TRAIL_COLOR = "rgba(52,211,153,0.75)";
+const HALO_COLOR = "rgba(34,211,238,0.25)";
+const PARTICLE_COLOR = "#22d3ee";
 
 const himmelblau = (x: number, y: number) =>
   Math.pow(x * x + y - 11, 2) + Math.pow(x + y * y - 7, 2);
@@ -270,7 +273,7 @@ export default function Home() {
         setRunning(false);
         return;
       }
-      setStatus("Traversing saddle");
+      setStatus("Optimizing");
       frameRef.current = requestAnimationFrame(tick);
     };
 
@@ -360,7 +363,7 @@ export default function Home() {
               href="https://zenodo.org/records/17702989"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-zinc-100 backdrop-blur-md transition hover:bg-white/20"
+              className="rounded-full bg-white/20 px-6 py-3 text-sm font-semibold text-zinc-100 backdrop-blur-md transition hover:bg-white/30"
             >
               Download PDF
             </a>
@@ -418,7 +421,7 @@ export default function Home() {
                       x: trail.x,
                       y: trail.y,
                       z: trail.z,
-                      line: { color: "rgba(52,211,153,0.75)", width: 5 },
+                      line: { color: TRAIL_COLOR, width: 5 },
                       hoverinfo: "skip",
                     },
                     {
@@ -427,7 +430,7 @@ export default function Home() {
                       x: [currentPoint.x],
                       y: [currentPoint.y],
                       z: [currentZ],
-                      marker: { size: 16, color: "rgba(34,211,238,0.25)" },
+                      marker: { size: 16, color: HALO_COLOR },
                       hoverinfo: "skip",
                     },
                     {
@@ -436,7 +439,7 @@ export default function Home() {
                       x: [currentPoint.x],
                       y: [currentPoint.y],
                       z: [currentZ],
-                      marker: { size: 6, color: "#22d3ee" },
+                      marker: { size: 6, color: PARTICLE_COLOR },
                       hoverinfo: "skip",
                     },
                   ]}
@@ -507,7 +510,7 @@ export default function Home() {
                   id="lr"
                   type="range"
                   min={0.01}
-                  max={0.6}
+                  max={0.5}
                   step={0.01}
                   value={learningRate}
                   onChange={(e) => setLearningRate(Number(e.target.value))}
@@ -525,7 +528,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={resetSimulation}
-                  className="rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-zinc-100 backdrop-blur-md"
+                  className="rounded-full bg-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-100 backdrop-blur-md transition hover:bg-white/30"
                 >
                   Reset
                 </button>
@@ -591,7 +594,10 @@ export default function Home() {
 
         <FadeSection id="see-metric" className="py-24">
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-100 md:text-5xl">SEE Metric</h2>
-          <p className="mt-8 text-center text-3xl font-semibold md:text-5xl bg-gradient-to-r from-emerald-300 via-cyan-300 to-emerald-200 bg-clip-text text-transparent">
+          <p
+            className="mt-8 text-center text-3xl font-semibold md:text-5xl bg-gradient-to-r from-emerald-300 via-cyan-300 to-emerald-200 bg-clip-text text-transparent"
+            aria-label="SEE equals P esc over tau avg"
+          >
             SEE = <span className="inline-block align-middle">P<sub>esc</sub></span>/
             <span className="inline-block align-middle">&tau;<sub>avg</sub></span>
           </p>
@@ -689,7 +695,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleCopy}
-                className="rounded-full bg-white/10 px-4 py-2 text-xs font-medium text-zinc-200 backdrop-blur-md"
+                className="rounded-full bg-white/20 px-4 py-2 text-xs font-medium text-zinc-200 backdrop-blur-md transition hover:bg-white/30"
               >
                 {copyState}
               </button>
