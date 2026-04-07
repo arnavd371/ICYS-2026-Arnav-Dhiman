@@ -413,7 +413,7 @@ export default function Home() {
                         x: { show: true, color: "rgba(52,211,153,0.2)", width: 1 },
                         y: { show: true, color: "rgba(34,211,238,0.2)", width: 1 },
                         z: { show: false },
-                      },
+                      } as any,
                     },
                     {
                       type: "scatter3d",
