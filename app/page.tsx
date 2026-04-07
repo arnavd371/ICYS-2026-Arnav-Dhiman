@@ -8,6 +8,12 @@ type Landscape = "narrow-valley" | "multimodal" | "flat-saddle" | "mixed";
 type Goal = "fast-escape" | "balanced" | "baseline";
 
 const initialTrajectory = { x: 0.12, y: 0.08 };
+const resetRange = {
+  xMin: 0.07,
+  xSpan: 0.08,
+  yMin: 0.04,
+  ySpan: 0.08,
+};
 
 const benchmarkRows = [
   { fn: "Himmelblau", fixed: "1.0000", adam: "0.3086", rmsprop: "1.0000", adagrad: "0.2525" },
@@ -60,8 +66,6 @@ export default function Home() {
     frame: 0,
   });
   const frameRef = useRef<number | null>(null);
-
-  const formula = String.raw`SEE = \frac{P_{esc}}{\tau_{avg}}`;
 
   const bibtex = `@article{dhiman2026see,
   title     = {Saddle Escape Efficiency: A Novel Metric to Benchmark Learning Rates in Non-Convex Optimization},
@@ -141,9 +145,9 @@ export default function Home() {
         const mHatY = state.my / (1 - Math.pow(beta1, t));
         const vHatX = state.vx / (1 - Math.pow(beta2, t));
         const vHatY = state.vy / (1 - Math.pow(beta2, t));
-        const lag = Math.hypot(state.x, state.y) < 0.4 ? 0.3 : 1;
-        state.x -= (learningRate / (Math.sqrt(vHatX) + eps)) * mHatX * lag;
-        state.y -= (learningRate / (Math.sqrt(vHatY) + eps)) * mHatY * lag;
+        const dampingFactor = Math.hypot(state.x, state.y) < 0.4 ? 0.3 : 1;
+        state.x -= (learningRate / (Math.sqrt(vHatX) + eps)) * mHatX * dampingFactor;
+        state.y -= (learningRate / (Math.sqrt(vHatY) + eps)) * mHatY * dampingFactor;
       }
 
       state.frame += 1;
@@ -182,8 +186,8 @@ export default function Home() {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
     setRunning(false);
     sim.current = {
-      x: 0.07 + Math.random() * 0.08,
-      y: 0.04 + Math.random() * 0.08,
+      x: resetRange.xMin + Math.random() * resetRange.xSpan,
+      y: resetRange.yMin + Math.random() * resetRange.ySpan,
       mx: 0,
       my: 0,
       vx: 0,
@@ -395,7 +399,10 @@ export default function Home() {
 
         <FadeSection id="see-metric" className="py-24">
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-100 md:text-5xl">SEE Metric</h2>
-          <p className="mt-8 text-center font-mono text-3xl text-emerald-300 md:text-5xl">{formula}</p>
+          <p className="mt-8 text-center text-3xl text-emerald-300 md:text-5xl">
+            SEE = <span className="inline-block align-middle">P<sub>esc</sub></span>/
+            <span className="inline-block align-middle">&tau;<sub>avg</sub></span>
+          </p>
           <p className="mx-auto mt-8 max-w-5xl text-center text-zinc-400">
             SEE rewards both reliability and speed of escape from saddle regions.
           </p>
