@@ -9,19 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
+    "@react-three/drei": "^9.96.0",
+    "@react-three/fiber": "^8.15.0",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.300.0",
-    "three": "^0.160.0",
-    "@react-three/fiber": "^8.15.0",
-    "@react-three/drei": "^9.96.0"
+    "next": "^15.5.14",
+    "plotly.js": "^3.5.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-plotly.js": "^2.6.0",
+    "three": "^0.160.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
     "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/react-plotly.js": "^2.6.4",
     "@types/three": "^0.160.0",
     "autoprefixer": "latest",
     "postcss": "latest",
