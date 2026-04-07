@@ -1,18 +1,94 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Optimizer = "fixed" | "adam" | "rmsprop" | "adagrad";
 type Landscape = "narrow-valley" | "multimodal" | "flat-saddle" | "mixed";
 type Goal = "fast-escape" | "balanced" | "baseline";
+type Benchmark = "himmelblau" | "rosenbrock" | "ackley";
 
-const initialTrajectory = { x: 0.12, y: 0.08 };
-const resetRange = {
-  xMin: 0.07,
-  xSpan: 0.08,
-  yMin: 0.04,
-  ySpan: 0.08,
+const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
+
+const SURFACE_GRID_RESOLUTION = 64;
+const TRAIL_LIMIT = 180;
+const DAMPING_RADIUS_THRESHOLD = 0.6;
+const DAMPING_SCALE = 0.35;
+const RESET_JITTER_RATIO = 0.05;
+const FINITE_DIFF_STEP = 1e-3; // finite difference step for numeric gradient calculation
+const TRAIL_COLOR = "rgba(52,211,153,0.75)";
+const HALO_COLOR = "rgba(34,211,238,0.25)";
+const PARTICLE_COLOR = "#22d3ee";
+
+const himmelblau = (x: number, y: number) =>
+  Math.pow(x * x + y - 11, 2) + Math.pow(x + y * y - 7, 2);
+
+const rosenbrock = (x: number, y: number) => {
+  const a = 1;
+  const b = 100;
+  return Math.pow(a - x, 2) + b * Math.pow(y - x * x, 2);
+};
+
+const ackley = (x: number, y: number) => {
+  const sumSq = 0.5 * (x * x + y * y);
+  const sumCos = 0.5 * (Math.cos(2 * Math.PI * x) + Math.cos(2 * Math.PI * y));
+  return -20 * Math.exp(-0.2 * Math.sqrt(sumSq)) - Math.exp(sumCos) + Math.E + 20;
+};
+
+const numericGradient = (fn: (x: number, y: number) => number, x: number, y: number) => {
+  const h = FINITE_DIFF_STEP;
+  return {
+    gx: (fn(x + h, y) - fn(x - h, y)) / (2 * h),
+    gy: (fn(x, y + h) - fn(x, y - h)) / (2 * h),
+  };
+};
+
+const benchmarks: Record<
+  Benchmark,
+  {
+    label: string;
+    range: [number, number];
+    start: { x: number; y: number };
+    escapeRadius: number;
+    maxSteps: number;
+    fn: (x: number, y: number) => number;
+    grad: (x: number, y: number) => { gx: number; gy: number };
+  }
+> = {
+  himmelblau: {
+    label: "Himmelblau",
+    range: [-5, 5],
+    start: { x: -2.6, y: 1.4 },
+    escapeRadius: 4.4,
+    maxSteps: 280,
+    fn: himmelblau,
+    grad: (x, y) => ({
+      gx: 4 * x * (x * x + y - 11) + 2 * (x + y * y - 7),
+      gy: 2 * (x * x + y - 11) + 4 * y * (x + y * y - 7),
+    }),
+  },
+  rosenbrock: {
+    label: "Rosenbrock",
+    range: [-2.4, 2.4],
+    start: { x: -1.4, y: 1.2 },
+    escapeRadius: 2.4,
+    maxSteps: 320,
+    fn: rosenbrock,
+    grad: (x, y) => ({
+      gx: -2 * (1 - x) - 400 * x * (y - x * x),
+      gy: 200 * (y - x * x),
+    }),
+  },
+  ackley: {
+    label: "Ackley",
+    range: [-4.5, 4.5],
+    start: { x: 2.2, y: -1.6 },
+    escapeRadius: 3.2,
+    maxSteps: 260,
+    fn: ackley,
+    grad: (x, y) => numericGradient(ackley, x, y),
+  },
 };
 
 const benchmarkRows = [
@@ -45,18 +121,22 @@ function FadeSection({
 }
 
 export default function Home() {
+  const initialBenchmark: Benchmark = "himmelblau";
   const [optimizer, setOptimizer] = useState<Optimizer>("rmsprop");
   const [learningRate, setLearningRate] = useState(0.2);
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState("Near saddle");
-  const [path, setPath] = useState<Array<{ x: number; y: number }>>([initialTrajectory]);
+  const [benchmark, setBenchmark] = useState<Benchmark>(initialBenchmark);
+  const [path, setPath] = useState<Array<{ x: number; y: number }>>([
+    { x: benchmarks[initialBenchmark].start.x, y: benchmarks[initialBenchmark].start.y },
+  ]);
   const [landscape, setLandscape] = useState<Landscape>("narrow-valley");
   const [goal, setGoal] = useState<Goal>("fast-escape");
   const [copyState, setCopyState] = useState("Copy");
   const sim = useRef({
-    x: initialTrajectory.x,
-    y: initialTrajectory.y,
+    x: benchmarks[initialBenchmark].start.x,
+    y: benchmarks[initialBenchmark].start.y,
     mx: 0,
     my: 0,
     vx: 0,
@@ -111,16 +191,43 @@ export default function Home() {
     };
   }, [goal, landscape]);
 
+  const benchmarkConfig = benchmarks[benchmark];
+
+  const surfaceGrid = useMemo(() => {
+    const { range, fn } = benchmarkConfig;
+    const steps = SURFACE_GRID_RESOLUTION;
+    const x: number[] = [];
+    const y: number[] = [];
+    const span = range[1] - range[0];
+    for (let i = 0; i < steps; i += 1) {
+      x.push(range[0] + (span * i) / (steps - 1));
+      y.push(range[0] + (span * i) / (steps - 1));
+    }
+    const z = y.map((yVal) => x.map((xVal) => fn(xVal, yVal)));
+    return { x, y, z };
+  }, [benchmarkConfig]);
+
+  const trail = useMemo(() => {
+    const { fn } = benchmarkConfig;
+    const x = path.map((point) => point.x);
+    const y = path.map((point) => point.y);
+    const z = path.map((point) => fn(point.x, point.y));
+    return { x, y, z };
+  }, [benchmarkConfig, path]);
+
+  const currentPoint = path[path.length - 1] ?? benchmarkConfig.start;
+  const currentZ = benchmarkConfig.fn(currentPoint.x, currentPoint.y);
+
   useEffect(() => {
     if (!running) return;
     const tick = () => {
       const state = sim.current;
+      const { grad, escapeRadius, maxSteps, start } = benchmarks[benchmark];
       const beta1 = 0.9;
       const beta2 = 0.99;
       const rho = 0.92;
       const eps = 1e-7;
-      const gx = 2 * state.x;
-      const gy = -0.12 * state.y;
+      const { gx, gy } = grad(state.x, state.y);
 
       if (optimizer === "fixed") {
         state.x -= learningRate * gx;
@@ -145,27 +252,28 @@ export default function Home() {
         const mHatY = state.my / (1 - Math.pow(beta1, t));
         const vHatX = state.vx / (1 - Math.pow(beta2, t));
         const vHatY = state.vy / (1 - Math.pow(beta2, t));
-        const dampingFactor = Math.hypot(state.x, state.y) < 0.4 ? 0.3 : 1;
+        const distanceFromStart = Math.hypot(state.x - start.x, state.y - start.y);
+        const dampingFactor = distanceFromStart < DAMPING_RADIUS_THRESHOLD ? DAMPING_SCALE : 1;
         state.x -= (learningRate / (Math.sqrt(vHatX) + eps)) * mHatX * dampingFactor;
         state.y -= (learningRate / (Math.sqrt(vHatY) + eps)) * mHatY * dampingFactor;
       }
 
       state.frame += 1;
       setStep(state.frame);
-      setPath((prev) => [...prev.slice(-159), { x: state.x, y: state.y }]);
-      const radius = Math.hypot(state.x, state.y);
+      setPath((prev) => [...prev.slice(-TRAIL_LIMIT), { x: state.x, y: state.y }]);
+      const distance = Math.hypot(state.x - start.x, state.y - start.y);
 
-      if (radius >= 1.6) {
+      if (distance >= escapeRadius) {
         setStatus(`Escaped in ${state.frame} steps`);
         setRunning(false);
         return;
       }
-      if (state.frame >= 260) {
+      if (state.frame >= maxSteps) {
         setStatus("Stalled near saddle");
         setRunning(false);
         return;
       }
-      setStatus("Near saddle");
+      setStatus("Optimizing");
       frameRef.current = requestAnimationFrame(tick);
     };
 
@@ -173,7 +281,7 @@ export default function Home() {
     return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [learningRate, optimizer, running]);
+  }, [benchmark, learningRate, optimizer, running]);
 
   useEffect(() => {
     if (!running && frameRef.current) {
@@ -182,12 +290,16 @@ export default function Home() {
     }
   }, [running]);
 
-  const resetSimulation = () => {
+  const resetSimulation = useCallback(() => {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
     setRunning(false);
+    const { range, start } = benchmarks[benchmark];
+    const jitter = (range[1] - range[0]) * RESET_JITTER_RATIO;
+    const seedX = start.x + (Math.random() - 0.5) * jitter;
+    const seedY = start.y + (Math.random() - 0.5) * jitter;
     sim.current = {
-      x: resetRange.xMin + Math.random() * resetRange.xSpan,
-      y: resetRange.yMin + Math.random() * resetRange.ySpan,
+      x: seedX,
+      y: seedY,
       mx: 0,
       my: 0,
       vx: 0,
@@ -198,12 +310,12 @@ export default function Home() {
     };
     setStep(0);
     setStatus("Near saddle");
-    setPath([{ x: sim.current.x, y: sim.current.y }]);
-  };
+    setPath([{ x: seedX, y: seedY }]);
+  }, [benchmark]);
 
-  const pathPoints = path
-    .map(({ x, y }) => `${380 + x * 130},${180 - y * 84}`)
-    .join(" ");
+  useEffect(() => {
+    resetSimulation();
+  }, [benchmark, resetSimulation]);
 
   const handleCopy = async () => {
     try {
@@ -251,7 +363,7 @@ export default function Home() {
               href="https://zenodo.org/records/17702989"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-semibold text-zinc-100 ring-1 ring-white/15 transition hover:bg-zinc-800"
+              className="rounded-full bg-white/20 px-6 py-3 text-sm font-semibold text-zinc-100 backdrop-blur-md transition hover:bg-white/30"
             >
               Download PDF
             </a>
@@ -276,42 +388,111 @@ export default function Home() {
             Interactive Saddle Escape Simulation
           </h2>
           <p className="mt-6 max-w-4xl text-zinc-400">
-            Tune the optimizer and learning rate to see escape behavior in a saddle landscape with
-            weak curvature along one axis.
+            Explore a live 3D landscape and watch a glowing optimizer particle escape the saddle
+            geometry across canonical benchmark functions.
           </p>
-          <div className="mt-10 grid gap-10 lg:grid-cols-[1.45fr_1fr]">
-            <div className="rounded-3xl bg-white/[0.03] p-4 ring-1 ring-white/10">
-              <svg
-                viewBox="0 0 760 360"
-                className="h-auto w-full rounded-2xl bg-gradient-to-br from-violet-500/10 via-zinc-950 to-emerald-500/10"
-                role="img"
-                aria-label="Saddle trajectory visualization"
-              >
-                <defs>
-                  <linearGradient id="escapeStroke" x1="0%" x2="100%" y1="0%" y2="0%">
-                    <stop offset="0%" stopColor="#34d399" />
-                    <stop offset="100%" stopColor="#06b6d4" />
-                  </linearGradient>
-                </defs>
-                <path d="M90,90 Q235,180 380,180 Q525,180 670,90" fill="none" stroke="#8b5cf6" strokeWidth="4" />
-                <path d="M300,70 Q380,125 380,180 Q380,235 300,290" fill="none" stroke="#10b981" strokeWidth="4" />
-                <polyline points={pathPoints} fill="none" stroke="url(#escapeStroke)" strokeWidth="3.2" />
-                <circle cx={380 + sim.current.x * 130} cy={180 - sim.current.y * 84} r="6.5" fill="#a78bfa" />
-                <circle cx={380} cy={180} r="5.5" fill="#fff" />
-              </svg>
-              <div className="mt-4 flex flex-wrap gap-3 text-sm">
-                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-emerald-200 ring-1 ring-emerald-400/25">
-                  Status: {status}
-                </span>
-                <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-cyan-200 ring-1 ring-cyan-400/25">
-                  Step: {step}
+          <div className="mt-12 grid gap-10 lg:grid-cols-[1.65fr_1fr] lg:items-start">
+            <div>
+              <div className="relative h-[420px] w-full">
+                <Plot
+                  data={[
+                    {
+                      type: "surface",
+                      x: surfaceGrid.x,
+                      y: surfaceGrid.y,
+                      z: surfaceGrid.z,
+                      opacity: 0.88,
+                      showscale: false,
+                      colorscale: [
+                        [0, "#0f172a"],
+                        [0.25, "#0f766e"],
+                        [0.6, "#22d3ee"],
+                        [1, "#a7f3d0"],
+                      ],
+                      contours: {
+                        x: { show: true, color: "rgba(52,211,153,0.2)", width: 1 },
+                        y: { show: true, color: "rgba(34,211,238,0.2)", width: 1 },
+                        z: { show: false },
+                      },
+                    },
+                    {
+                      type: "scatter3d",
+                      mode: "lines",
+                      x: trail.x,
+                      y: trail.y,
+                      z: trail.z,
+                      line: { color: TRAIL_COLOR, width: 5 },
+                      hoverinfo: "skip",
+                    },
+                    {
+                      type: "scatter3d",
+                      mode: "markers",
+                      x: [currentPoint.x],
+                      y: [currentPoint.y],
+                      z: [currentZ],
+                      marker: { size: 16, color: HALO_COLOR },
+                      hoverinfo: "skip",
+                    },
+                    {
+                      type: "scatter3d",
+                      mode: "markers",
+                      x: [currentPoint.x],
+                      y: [currentPoint.y],
+                      z: [currentZ],
+                      marker: { size: 6, color: PARTICLE_COLOR },
+                      hoverinfo: "skip",
+                    },
+                  ]}
+                  layout={{
+                    margin: { l: 0, r: 0, t: 0, b: 0 },
+                    scene: {
+                      xaxis: { visible: false },
+                      yaxis: { visible: false },
+                      zaxis: { visible: false },
+                      bgcolor: "rgba(0,0,0,0)",
+                      camera: { eye: { x: 1.35, y: 1.35, z: 0.9 } },
+                    },
+                    paper_bgcolor: "rgba(0,0,0,0)",
+                    plot_bgcolor: "rgba(0,0,0,0)",
+                    showlegend: false,
+                  }}
+                  config={{ displayModeBar: false, responsive: true }}
+                  style={{ width: "100%", height: "100%" }}
+                />
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-4 text-xs uppercase tracking-[0.24em] text-zinc-400">
+                <span aria-label={`Current status ${status}`}>Status · {status}</span>
+                <span aria-label={`Current step ${step}`}>Step · {step}</span>
+                <span aria-label={`Current surface ${benchmarkConfig.label}`}>
+                  Surface · {benchmarkConfig.label}
                 </span>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="optimizer" className="mb-2 block text-sm font-medium text-zinc-300">
+            <div className="space-y-4">
+              <div className="rounded-2xl bg-white/5 px-4 py-3 backdrop-blur-md">
+                <label htmlFor="benchmark" className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-300">
+                  Benchmark Function
+                </label>
+                <select
+                  id="benchmark"
+                  value={benchmark}
+                  onChange={(e) => setBenchmark(e.target.value as Benchmark)}
+                  className="mt-3 w-full rounded-lg bg-zinc-950/40 px-2 py-1 text-base font-medium text-zinc-100 outline-none"
+                >
+                  <option value="himmelblau" className="bg-zinc-950 text-zinc-100">
+                    Himmelblau
+                  </option>
+                  <option value="rosenbrock" className="bg-zinc-950 text-zinc-100">
+                    Rosenbrock
+                  </option>
+                  <option value="ackley" className="bg-zinc-950 text-zinc-100">
+                    Ackley
+                  </option>
+                </select>
+              </div>
+              <div className="rounded-2xl bg-white/5 px-4 py-3 backdrop-blur-md">
+                <label htmlFor="optimizer" className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-300">
                   Optimizer
                 </label>
                 <select
@@ -321,17 +502,25 @@ export default function Home() {
                     setOptimizer(e.target.value as Optimizer);
                     resetSimulation();
                   }}
-                  className="w-full rounded-xl bg-white/[0.04] px-4 py-3 text-zinc-100 ring-1 ring-white/10 outline-none transition focus:ring-emerald-400/50"
+                  className="mt-3 w-full rounded-lg bg-zinc-950/40 px-2 py-1 text-base font-medium text-zinc-100 outline-none"
                 >
-                  <option value="fixed">Fixed</option>
-                  <option value="adam">Adam</option>
-                  <option value="rmsprop">RMSProp</option>
-                  <option value="adagrad">AdaGrad</option>
+                  <option value="fixed" className="bg-zinc-950 text-zinc-100">
+                    Fixed
+                  </option>
+                  <option value="adam" className="bg-zinc-950 text-zinc-100">
+                    Adam
+                  </option>
+                  <option value="rmsprop" className="bg-zinc-950 text-zinc-100">
+                    RMSProp
+                  </option>
+                  <option value="adagrad" className="bg-zinc-950 text-zinc-100">
+                    AdaGrad
+                  </option>
                 </select>
               </div>
-              <div>
-                <label htmlFor="lr" className="mb-2 block text-sm font-medium text-zinc-300">
-                  Learning Rate: {learningRate.toFixed(2)}
+              <div className="rounded-2xl bg-white/5 px-4 py-3 backdrop-blur-md">
+                <label htmlFor="lr" className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-300">
+                  Learning Rate · {learningRate.toFixed(2)}
                 </label>
                 <input
                   id="lr"
@@ -341,21 +530,21 @@ export default function Home() {
                   step={0.01}
                   value={learningRate}
                   onChange={(e) => setLearningRate(Number(e.target.value))}
-                  className="w-full accent-emerald-400"
+                  className="mt-3 w-full accent-emerald-400"
                 />
               </div>
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={() => setRunning((prev) => !prev)}
-                  className="rounded-full bg-gradient-to-r from-emerald-400 to-cyan-500 px-5 py-2.5 text-sm font-semibold text-zinc-950"
+                  className="rounded-full bg-gradient-to-r from-emerald-400/90 to-cyan-400/90 px-5 py-2.5 text-sm font-semibold text-zinc-950 shadow-lg shadow-emerald-500/20"
                 >
                   {running ? "Pause" : "Start"}
                 </button>
                 <button
                   type="button"
                   onClick={resetSimulation}
-                  className="rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-zinc-100 ring-1 ring-white/15"
+                  className="rounded-full bg-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-100 backdrop-blur-md transition hover:bg-white/30"
                 >
                   Reset
                 </button>
@@ -385,13 +574,35 @@ export default function Home() {
             role="img"
             aria-label="Curves up and curves down around a saddle point"
           >
-            <path d="M120,95 Q310,185 500,185 Q690,185 880,95" fill="none" stroke="#8b5cf6" strokeWidth="6" />
-            <path d="M430,65 Q500,125 500,185 Q500,245 430,305" fill="none" stroke="#34d399" strokeWidth="6" />
-            <circle cx="500" cy="185" r="7" fill="#f4f4f5" />
+            <defs>
+              <linearGradient id="saddleUp" x1="0%" x2="100%" y1="0%" y2="0%">
+                <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#7c3aed" />
+              </linearGradient>
+              <linearGradient id="saddleDown" x1="0%" x2="100%" y1="0%" y2="0%">
+                <stop offset="0%" stopColor="#34d399" />
+                <stop offset="100%" stopColor="#22d3ee" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M120,95 Q310,185 500,185 Q690,185 880,95"
+              fill="none"
+              stroke="url(#saddleUp)"
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
+            <path
+              d="M430,65 Q500,125 500,185 Q500,245 430,305"
+              fill="none"
+              stroke="url(#saddleDown)"
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
+            <circle cx="500" cy="185" r="7" fill="#e2e8f0" />
             <text x="196" y="122" fill="#a78bfa" fontSize="25" fontWeight="700">
               Curves up
             </text>
-            <text x="562" y="192" fill="#34d399" fontSize="25" fontWeight="700">
+            <text x="562" y="192" fill="#22d3ee" fontSize="25" fontWeight="700">
               Curves down
             </text>
           </svg>
@@ -399,7 +610,10 @@ export default function Home() {
 
         <FadeSection id="see-metric" className="py-24">
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-100 md:text-5xl">SEE Metric</h2>
-          <p className="mt-8 text-center text-3xl text-emerald-300 md:text-5xl">
+          <p
+            className="mt-8 text-center text-3xl font-semibold md:text-5xl bg-gradient-to-r from-emerald-300 via-cyan-300 to-emerald-200 bg-clip-text text-transparent"
+            aria-label="SEE equals P esc over tau avg"
+          >
             SEE = <span className="inline-block align-middle">P<sub>esc</sub></span>/
             <span className="inline-block align-middle">&tau;<sub>avg</sub></span>
           </p>
@@ -415,10 +629,10 @@ export default function Home() {
           <p className="mt-6 max-w-3xl text-zinc-400">
             SEE scores at learning rate 0.5 across canonical non-convex benchmarks.
           </p>
-          <div className="mt-8 overflow-x-auto rounded-2xl bg-white/[0.02] p-2 ring-1 ring-white/10">
-            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+          <div className="mt-8 overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
-                <tr className="text-zinc-300">
+                <tr className="border-b border-white/10 text-zinc-300">
                   <th className="px-4 py-3 font-medium">Function</th>
                   <th className="px-4 py-3 font-medium">Fixed LR</th>
                   <th className="px-4 py-3 font-medium">Adam</th>
@@ -428,7 +642,7 @@ export default function Home() {
               </thead>
               <tbody className="text-zinc-400">
                 {benchmarkRows.map((row) => (
-                  <tr key={row.fn} className="border-t border-white/10">
+                  <tr key={row.fn} className="border-b border-white/10 last:border-b-0">
                     <td className="px-4 py-3 text-zinc-200">{row.fn}</td>
                     <td className="px-4 py-3">{row.fixed}</td>
                     <td className="px-4 py-3">{row.adam}</td>
@@ -458,7 +672,7 @@ export default function Home() {
                 id="landscape"
                 value={landscape}
                 onChange={(e) => setLandscape(e.target.value as Landscape)}
-                className="w-full rounded-xl bg-white/[0.04] px-4 py-3 text-zinc-100 ring-1 ring-white/10 outline-none"
+                className="w-full rounded-xl bg-white/5 px-4 py-3 text-zinc-100 outline-none backdrop-blur-md"
               >
                 <option value="narrow-valley">Narrow curved valley</option>
                 <option value="multimodal">Multimodal surface</option>
@@ -474,16 +688,16 @@ export default function Home() {
                 id="goal"
                 value={goal}
                 onChange={(e) => setGoal(e.target.value as Goal)}
-                className="w-full rounded-xl bg-white/[0.04] px-4 py-3 text-zinc-100 ring-1 ring-white/10 outline-none"
+                className="w-full rounded-xl bg-white/5 px-4 py-3 text-zinc-100 outline-none backdrop-blur-md"
               >
                 <option value="fast-escape">Fastest saddle escape</option>
                 <option value="balanced">Balanced robustness</option>
                 <option value="baseline">Simple baseline</option>
               </select>
             </div>
-            <div className="rounded-2xl bg-white/[0.03] p-5 ring-1 ring-white/10">
-              <p className="text-sm text-zinc-400">Recommended Optimizer</p>
-              <p className="mt-2 text-xl font-semibold text-emerald-300">{recommendation.optimizer}</p>
+            <div className="border-l border-emerald-400/40 pl-4">
+              <p className="text-sm uppercase tracking-[0.3em] text-zinc-400">Recommended Optimizer</p>
+              <p className="mt-3 text-xl font-semibold text-emerald-300">{recommendation.optimizer}</p>
               <p className="mt-2 text-zinc-300">Learning rate: {recommendation.lr}</p>
               <p className="mt-3 text-sm text-zinc-400">{recommendation.reason}</p>
             </div>
@@ -492,12 +706,12 @@ export default function Home() {
 
         <FadeSection id="citation" className="py-24">
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-100 md:text-5xl">Citation</h2>
-          <div className="mt-8 rounded-2xl bg-zinc-900/90 p-6 ring-1 ring-white/10">
+          <div className="mt-8 border-t border-white/10 pt-6">
             <div className="mb-4 flex justify-end">
               <button
                 type="button"
                 onClick={handleCopy}
-                className="rounded-full bg-white/5 px-4 py-2 text-xs font-medium text-zinc-200 ring-1 ring-white/10"
+                className="rounded-full bg-white/20 px-4 py-2 text-xs font-medium text-zinc-200 backdrop-blur-md transition hover:bg-white/30"
               >
                 {copyState}
               </button>
