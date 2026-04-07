@@ -360,7 +360,7 @@
         <p>In non-convex optimization, the landscape contains multiple local minima and saddle points. A saddle point is a critical point where the gradient is zero, but the point is neither a local minimum nor a local maximum. These points cause gradient-based algorithms to stagnate or slow down significantly.</p>
         <p>Adaptive learning rate methods such as AdaGrad, RMSProp, and Adam are widely used to handle these landscapes. However, there is no dedicated metric to quantitatively evaluate and compare their ability to escape saddle points. Choosing the right optimizer still relies largely on the intuition of the programmer, which becomes increasingly inefficient as functions grow in complexity and dimension.</p>
         <div class="svg-wrap">
-          <svg viewBox="0 0 760 360" width="100%" role="img" aria-label="Saddle point illustration with crossing up-curving and down-curving parabolas">
+          <svg viewBox="0 0 760 360" width="100%" role="img" aria-label="Saddle point illustration with curves that curve up and curve down">
             <rect x="0" y="0" width="760" height="360" fill="rgba(12,18,25,0.25)"></rect>
             <path d="M90,90 Q235,180 380,180 Q525,180 670,90" fill="none" stroke="#7F77DD" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
             <path d="M300,70 Q380,125 380,180 Q380,235 300,290" fill="none" stroke="#1D9E75" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
