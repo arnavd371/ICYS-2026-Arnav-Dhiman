@@ -16,7 +16,7 @@ const TRAIL_LIMIT = 180;
 const DAMPING_RADIUS_THRESHOLD = 0.6;
 const DAMPING_SCALE = 0.35;
 const RESET_JITTER_RATIO = 0.05;
-const FINITE_DIFF_STEP = 1e-3; // Ackley numeric gradient step for stable, responsive animation
+const FINITE_DIFF_STEP = 1e-3; // finite difference step for numeric gradient calculation
 const TRAIL_COLOR = "rgba(52,211,153,0.75)";
 const HALO_COLOR = "rgba(34,211,238,0.25)";
 const PARTICLE_COLOR = "#22d3ee";
@@ -252,8 +252,8 @@ export default function Home() {
         const mHatY = state.my / (1 - Math.pow(beta1, t));
         const vHatX = state.vx / (1 - Math.pow(beta2, t));
         const vHatY = state.vy / (1 - Math.pow(beta2, t));
-        const dampingDistance = Math.hypot(state.x - start.x, state.y - start.y);
-        const dampingFactor = dampingDistance < DAMPING_RADIUS_THRESHOLD ? DAMPING_SCALE : 1;
+        const distanceFromStart = Math.hypot(state.x - start.x, state.y - start.y);
+        const dampingFactor = distanceFromStart < DAMPING_RADIUS_THRESHOLD ? DAMPING_SCALE : 1;
         state.x -= (learningRate / (Math.sqrt(vHatX) + eps)) * mHatX * dampingFactor;
         state.y -= (learningRate / (Math.sqrt(vHatY) + eps)) * mHatY * dampingFactor;
       }
@@ -461,9 +461,11 @@ export default function Home() {
                 />
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-4 text-xs uppercase tracking-[0.24em] text-zinc-400">
-                <span>Status · {status}</span>
-                <span>Step · {step}</span>
-                <span>Surface · {benchmarkConfig.label}</span>
+                <span aria-label={`Current status ${status}`}>Status · {status}</span>
+                <span aria-label={`Current step ${step}`}>Step · {step}</span>
+                <span aria-label={`Current surface ${benchmarkConfig.label}`}>
+                  Surface · {benchmarkConfig.label}
+                </span>
               </div>
             </div>
 
@@ -476,11 +478,17 @@ export default function Home() {
                   id="benchmark"
                   value={benchmark}
                   onChange={(e) => setBenchmark(e.target.value as Benchmark)}
-                  className="mt-3 w-full bg-transparent text-base font-medium text-zinc-100 outline-none"
+                  className="mt-3 w-full rounded-lg bg-zinc-950/40 px-2 py-1 text-base font-medium text-zinc-100 outline-none"
                 >
-                  <option value="himmelblau">Himmelblau</option>
-                  <option value="rosenbrock">Rosenbrock</option>
-                  <option value="ackley">Ackley</option>
+                  <option value="himmelblau" className="bg-zinc-950 text-zinc-100">
+                    Himmelblau
+                  </option>
+                  <option value="rosenbrock" className="bg-zinc-950 text-zinc-100">
+                    Rosenbrock
+                  </option>
+                  <option value="ackley" className="bg-zinc-950 text-zinc-100">
+                    Ackley
+                  </option>
                 </select>
               </div>
               <div className="rounded-2xl bg-white/5 px-4 py-3 backdrop-blur-md">
@@ -494,12 +502,20 @@ export default function Home() {
                     setOptimizer(e.target.value as Optimizer);
                     resetSimulation();
                   }}
-                  className="mt-3 w-full bg-transparent text-base font-medium text-zinc-100 outline-none"
+                  className="mt-3 w-full rounded-lg bg-zinc-950/40 px-2 py-1 text-base font-medium text-zinc-100 outline-none"
                 >
-                  <option value="fixed">Fixed</option>
-                  <option value="adam">Adam</option>
-                  <option value="rmsprop">RMSProp</option>
-                  <option value="adagrad">AdaGrad</option>
+                  <option value="fixed" className="bg-zinc-950 text-zinc-100">
+                    Fixed
+                  </option>
+                  <option value="adam" className="bg-zinc-950 text-zinc-100">
+                    Adam
+                  </option>
+                  <option value="rmsprop" className="bg-zinc-950 text-zinc-100">
+                    RMSProp
+                  </option>
+                  <option value="adagrad" className="bg-zinc-950 text-zinc-100">
+                    AdaGrad
+                  </option>
                 </select>
               </div>
               <div className="rounded-2xl bg-white/5 px-4 py-3 backdrop-blur-md">
