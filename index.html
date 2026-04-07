@@ -381,11 +381,11 @@
         <h2>Saddle Escape Efficiency (SEE)</h2>
         <p class="formula">SEE = P<sub>esc</sub> / &tau;<sub>avg</sub></p>
         <ul>
-          <li>P_esc is the probability that the optimizer escapes the saddle region within a fixed budget of T_max = 100 iterations, estimated over N = 50 independent trials. Escape is recorded when the Euclidean norm ||x|| &gt; 2.0.</li>
-          <li>tau_avg is the average number of steps taken to escape, conditioned on successful escape.</li>
+          <li>P<sub>esc</sub> is the probability that the optimizer escapes the saddle region within a fixed budget of T<sub>max</sub> = 100 iterations, estimated over N = 50 independent trials. Escape is recorded when the Euclidean norm ||x|| &gt; 2.0.</li>
+          <li>&tau;<sub>avg</sub> is the average number of steps taken to escape, conditioned on successful escape.</li>
         </ul>
         <p>Interpretation: A high SEE value means the optimizer escapes saddle regions quickly and reliably. A low SEE means the optimizer either gets trapped or escapes too slowly. SEE is not a static property of an optimizer. It varies based on the local geometry of the loss landscape.</p>
-        <p>Initialization: Each trial starts from a small random perturbation around the origin, x_0 drawn from Normal(0, 0.01). Learning rates tested: {0.001, 0.01, 0.05, 0.1, 0.2, 0.5}</p>
+        <p>Initialization: Each trial starts from a small random perturbation around the origin, x<sub>0</sub> drawn from Normal(0, 0.01). Learning rates tested: {0.001, 0.01, 0.05, 0.1, 0.2, 0.5}</p>
       </article>
     </section>
 
@@ -404,7 +404,7 @@
         </article>
         <article class="card">
           <h3>Ackley Function</h3>
-          <p><strong>f(x) = -20 * exp(-0.2 * sqrt(mean(x_i^2))) - exp(mean(cos(2*pi*x_i))) + 20 + e</strong></p>
+          <p><strong>f(x) = -20 * exp(-0.2 * sqrt(mean(x<sub>i</sub>^2))) - exp(mean(cos(2*pi*x<sub>i</sub>))) + 20 + e</strong></p>
           <p>A highly multimodal function with many local minima and a nearly flat saddle region near the origin.</p>
         </article>
       </div>
