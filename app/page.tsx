@@ -252,8 +252,8 @@ export default function Home() {
         const mHatY = state.my / (1 - Math.pow(beta1, t));
         const vHatX = state.vx / (1 - Math.pow(beta2, t));
         const vHatY = state.vy / (1 - Math.pow(beta2, t));
-        const dampingFactor =
-          Math.hypot(state.x, state.y) < DAMPING_RADIUS_THRESHOLD ? DAMPING_SCALE : 1;
+        const dampingDistance = Math.hypot(state.x - start.x, state.y - start.y);
+        const dampingFactor = dampingDistance < DAMPING_RADIUS_THRESHOLD ? DAMPING_SCALE : 1;
         state.x -= (learningRate / (Math.sqrt(vHatX) + eps)) * mHatX * dampingFactor;
         state.y -= (learningRate / (Math.sqrt(vHatY) + eps)) * mHatY * dampingFactor;
       }
@@ -523,7 +523,7 @@ export default function Home() {
                   onClick={() => setRunning((prev) => !prev)}
                   className="rounded-full bg-gradient-to-r from-emerald-400/90 to-cyan-400/90 px-5 py-2.5 text-sm font-semibold text-zinc-950 shadow-lg shadow-emerald-500/20"
                 >
-                  {running ? "Pause" : "Play"}
+                  {running ? "Pause" : "Start"}
                 </button>
                 <button
                   type="button"
