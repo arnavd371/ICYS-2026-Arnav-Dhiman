@@ -11,6 +11,13 @@ type Benchmark = "himmelblau" | "rosenbrock" | "ackley";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
+const SURFACE_GRID_RESOLUTION = 64;
+const TRAIL_LIMIT = 180;
+const DAMPING_RADIUS_THRESHOLD = 0.6;
+const DAMPING_SCALE = 0.35;
+const RESET_JITTER_RATIO = 0.05;
+const FINITE_DIFF_STEP = 1e-3; // balances gradient stability with responsive animation
+
 const himmelblau = (x: number, y: number) =>
   Math.pow(x * x + y - 11, 2) + Math.pow(x + y * y - 7, 2);
 
@@ -27,7 +34,7 @@ const ackley = (x: number, y: number) => {
 };
 
 const numericGradient = (fn: (x: number, y: number) => number, x: number, y: number) => {
-  const h = 1e-3;
+  const h = FINITE_DIFF_STEP;
   return {
     gx: (fn(x + h, y) - fn(x - h, y)) / (2 * h),
     gy: (fn(x, y + h) - fn(x, y - h)) / (2 * h),
@@ -185,7 +192,7 @@ export default function Home() {
 
   const surfaceGrid = useMemo(() => {
     const { range, fn } = benchmarkConfig;
-    const steps = 64;
+    const steps = SURFACE_GRID_RESOLUTION;
     const x: number[] = [];
     const y: number[] = [];
     const span = range[1] - range[0];
@@ -242,14 +249,15 @@ export default function Home() {
         const mHatY = state.my / (1 - Math.pow(beta1, t));
         const vHatX = state.vx / (1 - Math.pow(beta2, t));
         const vHatY = state.vy / (1 - Math.pow(beta2, t));
-        const dampingFactor = Math.hypot(state.x, state.y) < 0.6 ? 0.35 : 1;
+        const dampingFactor =
+          Math.hypot(state.x, state.y) < DAMPING_RADIUS_THRESHOLD ? DAMPING_SCALE : 1;
         state.x -= (learningRate / (Math.sqrt(vHatX) + eps)) * mHatX * dampingFactor;
         state.y -= (learningRate / (Math.sqrt(vHatY) + eps)) * mHatY * dampingFactor;
       }
 
       state.frame += 1;
       setStep(state.frame);
-      setPath((prev) => [...prev.slice(-180), { x: state.x, y: state.y }]);
+      setPath((prev) => [...prev.slice(-TRAIL_LIMIT), { x: state.x, y: state.y }]);
       const distance = Math.hypot(state.x - start.x, state.y - start.y);
 
       if (distance >= escapeRadius) {
@@ -283,7 +291,7 @@ export default function Home() {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
     setRunning(false);
     const { range, start } = benchmarks[benchmark];
-    const jitter = (range[1] - range[0]) * 0.05;
+    const jitter = (range[1] - range[0]) * RESET_JITTER_RATIO;
     const seedX = start.x + (Math.random() - 0.5) * jitter;
     const seedY = start.y + (Math.random() - 0.5) * jitter;
     sim.current = {
