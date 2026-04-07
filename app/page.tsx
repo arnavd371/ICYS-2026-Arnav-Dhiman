@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Optimizer = "fixed" | "adam" | "rmsprop" | "adagrad";
 type Landscape = "narrow-valley" | "multimodal" | "flat-saddle" | "mixed";
@@ -279,7 +279,7 @@ export default function Home() {
     }
   }, [running]);
 
-  const resetSimulation = () => {
+  const resetSimulation = useCallback(() => {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
     setRunning(false);
     const { range, start } = benchmarks[benchmark];
@@ -300,11 +300,11 @@ export default function Home() {
     setStep(0);
     setStatus("Near saddle");
     setPath([{ x: seedX, y: seedY }]);
-  };
+  }, [benchmark]);
 
   useEffect(() => {
     resetSimulation();
-  }, [benchmark]);
+  }, [benchmark, resetSimulation]);
 
   const handleCopy = async () => {
     try {
@@ -583,7 +583,7 @@ export default function Home() {
 
         <FadeSection id="see-metric" className="py-24">
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-100 md:text-5xl">SEE Metric</h2>
-          <p className="mt-8 text-center text-3xl font-semibold text-transparent md:text-5xl bg-gradient-to-r from-emerald-300 via-cyan-300 to-emerald-200 bg-clip-text">
+          <p className="mt-8 text-center text-3xl font-semibold md:text-5xl bg-gradient-to-r from-emerald-300 via-cyan-300 to-emerald-200 bg-clip-text text-transparent">
             SEE = <span className="inline-block align-middle">P<sub>esc</sub></span>/
             <span className="inline-block align-middle">&tau;<sub>avg</sub></span>
           </p>
