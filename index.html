@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saddle Escape Efficiency, Arnav Dhiman</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --purple: #7F77DD;
+      --teal: #1D9E75;
+      --amber: #FAC775;
+      --red: #F09595;
+      --card-bg: rgba(255, 255, 255, 0.2);
+      --hero-bg: rgba(255, 255, 255, 0.15);
+      --card-border: rgba(255, 255, 255, 0.3);
+      --white: #ffffff;
+      --dark: #1b1b1b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      color: var(--white);
+      background-image: url('18129294.jpg');
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+      line-height: 1.65;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(15, 14, 34, 0.55), rgba(9, 23, 26, 0.55));
+      z-index: -1;
+    }
+
+    .container {
+      width: min(1140px, 92%);
+      margin: 0 auto;
+    }
+
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+      background: rgba(16, 17, 33, 0.45);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .nav-inner {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+      justify-content: center;
+      padding: 0.85rem 0.5rem;
+    }
+
+    .nav-inner a {
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 999px;
+      transition: background 0.2s ease;
+    }
+
+    .nav-inner a:hover,
+    .nav-inner a:focus-visible {
+      background: rgba(127, 119, 221, 0.35);
+      outline: none;
+    }
+
+    .hero {
+      min-height: 84vh;
+      display: flex;
+      align-items: center;
+      padding: 4.5rem 0 3.5rem;
+    }
+
+    .hero-card {
+      width: 100%;
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      background: var(--hero-bg);
+      padding: clamp(1.4rem, 4vw, 2.5rem);
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+      color: var(--white);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 4vw, 3rem);
+      line-height: 1.2;
+      margin-bottom: 0.9rem;
+    }
+
+    .meta {
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .subtitle {
+      font-size: 1.05rem;
+      max-width: 860px;
+      margin-bottom: 1.5rem;
+      color: rgba(255, 255, 255, 0.96);
+    }
+
+    .cta-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 0.7rem 1.1rem;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .btn-primary {
+      background: var(--teal);
+      color: var(--white);
+    }
+
+    .btn-secondary {
+      background: var(--purple);
+      color: var(--white);
+    }
+
+    section {
+      padding: 1.2rem 0 0.3rem;
+    }
+
+    .card {
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+      background: var(--card-bg);
+      padding: clamp(1rem, 2.4vw, 1.45rem);
+      margin-bottom: 1.2rem;
+    }
+
+    .formula {
+      margin: 1rem 0;
+      font-size: clamp(1.35rem, 3.4vw, 2rem);
+      font-weight: 800;
+      color: var(--white);
+      text-align: center;
+      background: rgba(127, 119, 221, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 0.9rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .svg-wrap {
+      margin-top: 1rem;
+      background: rgba(29, 158, 117, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 0.75rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0.2rem;
+      font-size: 0.96rem;
+    }
+
+    th, td {
+      padding: 0.55rem 0.5rem;
+      text-align: center;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    th {
+      background: rgba(20, 20, 30, 0.55);
+      color: var(--white);
+    }
+
+    td.label {
+      background: rgba(10, 10, 16, 0.48);
+      color: var(--white);
+      text-align: left;
+    }
+
+    .see-top {
+      background: var(--teal);
+      color: var(--white);
+    }
+
+    .see-good {
+      background: var(--purple);
+      color: var(--white);
+    }
+
+    .see-moderate {
+      background: var(--amber);
+      color: var(--dark);
+    }
+
+    .see-fail {
+      background: var(--red);
+      color: var(--dark);
+    }
+
+    details {
+      margin-top: 0.8rem;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.12);
+      padding: 0.5rem 0.75rem 0.75rem;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--white);
+      padding: 0.2rem 0;
+    }
+
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .code-block {
+      position: relative;
+      background: rgba(12, 12, 20, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 12px;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+
+    #copyBtn {
+      position: absolute;
+      top: 0.7rem;
+      right: 0.7rem;
+      border: none;
+      border-radius: 10px;
+      padding: 0.4rem 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--teal);
+      color: var(--white);
+    }
+
+    footer {
+      margin: 0.8rem 0 1.8rem;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.96);
+    }
+
+    footer a {
+      color: #d9f6ff;
+      font-weight: 700;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-inner">
+      <a href="#hero">Hero</a>
+      <a href="#abstract">Abstract</a>
+      <a href="#problem">The Problem</a>
+      <a href="#see">SEE Metric</a>
+      <a href="#benchmarks">Benchmarks</a>
+      <a href="#results">Results</a>
+      <a href="#findings">Findings</a>
+      <a href="#citation">Citation</a>
+    </div>
+  </nav>
+
+  <header id="hero" class="hero container reveal">
+    <div class="hero-card">
+      <h1>Saddle Escape Efficiency: A Novel Metric to Benchmark Learning Rates in Non-Convex Optimization</h1>
+      <p class="meta">Arnav Dhiman, Independent Researcher</p>
+      <p class="meta">March 7, 2026</p>
+      <p class="subtitle">Introducing SEE, a principled metric for evaluating how efficiently adaptive learning rate frameworks escape saddle points in non-convex optimization.</p>
+      <div class="cta-wrap">
+        <a class="btn btn-primary" href="https://zenodo.org/records/17702989" target="_blank" rel="noopener noreferrer">Read Paper</a>
+        <a class="btn btn-secondary" href="https://zenodo.org/records/17702989" target="_blank" rel="noopener noreferrer">Download PDF</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="abstract" class="reveal">
+      <article class="card">
+        <h2>Abstract</h2>
+        <p>Gradient descent is a fundamental optimization algorithm widely used in machine learning and numerical analysis. When it comes to non-convex functions, the choice of a learning rate framework in order to escape saddle points becomes extremely important. Although many studies focus on improving the gradient descent algorithm, this study focuses on how to navigate among current learning rate frameworks in order to choose the best one by introducing a novel metric: Saddle Escape Efficiency (SEE). Existing optimization studies primarily evaluate convergence speed or final loss, whereas SEE directly measures an optimizer's ability to escape saddle regions, a behavior not captured by standard metrics. This study also presents an experimental and computational analysis of three benchmark non-convex functions based on this new metric. We investigate the impact of SEE in order to better and more efficiently choose a learning rate framework which escapes saddle points most efficiently.</p>
+      </article>
+    </section>
+
+    <section id="problem" class="reveal">
+      <article class="card">
+        <h2>The Challenge of Saddle Points</h2>
+        <p>Gradient descent is the backbone of modern machine learning, powering algorithms from linear regression to deep neural networks. One of its key parameters is the learning rate, which controls the step size at each iteration. If the learning rate is too high, the algorithm overshoots the minimum. If it is too low, convergence becomes very slow.</p>
+        <p>In non-convex optimization, the landscape contains multiple local minima and saddle points. A saddle point is a critical point where the gradient is zero, but the point is neither a local minimum nor a local maximum. These points cause gradient-based algorithms to stagnate or slow down significantly.</p>
+        <p>Adaptive learning rate methods such as AdaGrad, RMSProp, and Adam are widely used to handle these landscapes. However, there is no dedicated metric to quantitatively evaluate and compare their ability to escape saddle points. Choosing the right optimizer still relies largely on the intuition of the programmer, which becomes increasingly inefficient as functions grow in complexity and dimension.</p>
+        <div class="svg-wrap">
+          <svg viewBox="0 0 760 360" width="100%" role="img" aria-label="Saddle point illustration with gradient arrows">
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 z" fill="#ffffff"></path>
+              </marker>
+            </defs>
+            <rect x="0" y="0" width="760" height="360" fill="rgba(12,18,25,0.25)"></rect>
+            <path d="M70,240 C170,150 260,110 380,180 C500,250 590,215 690,120" fill="none" stroke="#7F77DD" stroke-width="4"></path>
+            <path d="M70,140 C170,230 260,270 380,200 C500,130 590,165 690,260" fill="none" stroke="#1D9E75" stroke-width="4"></path>
+            <path d="M100,320 C220,230 300,180 380,180 C460,180 540,130 660,40" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2"></path>
+            <path d="M100,40 C220,130 300,180 380,180 C460,180 540,230 660,320" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2"></path>
+            <circle cx="380" cy="180" r="6" fill="#ffffff"></circle>
+            <text x="392" y="172" fill="#ffffff" font-size="18" font-weight="700">Saddle Point</text>
+            <line x1="380" y1="180" x2="470" y2="110" stroke="#ffffff" stroke-width="2.4" marker-end="url(#arrow)"></line>
+            <line x1="380" y1="180" x2="290" y2="250" stroke="#ffffff" stroke-width="2.4" marker-end="url(#arrow)"></line>
+            <line x1="380" y1="180" x2="525" y2="190" stroke="#ffffff" stroke-width="2.4" marker-end="url(#arrow)"></line>
+            <line x1="380" y1="180" x2="235" y2="170" stroke="#ffffff" stroke-width="2.4" marker-end="url(#arrow)"></line>
+          </svg>
+        </div>
+      </article>
+    </section>
+
+    <section id="see" class="reveal">
+      <article class="card">
+        <h2>Saddle Escape Efficiency (SEE)</h2>
+        <p class="formula">SEE = P<sub>esc</sub> / &tau;<sub>avg</sub></p>
+        <ul>
+          <li>P_esc is the probability that the optimizer escapes the saddle region within a fixed budget of T_max = 100 iterations, estimated over N = 50 independent trials. Escape is recorded when the Euclidean norm ||x|| &gt; 2.0.</li>
+          <li>tau_avg is the average number of steps taken to escape, conditioned on successful escape.</li>
+        </ul>
+        <p>Interpretation: A high SEE value means the optimizer escapes saddle regions quickly and reliably. A low SEE means the optimizer either gets trapped or escapes too slowly. SEE is not a static property of an optimizer. It varies based on the local geometry of the loss landscape.</p>
+        <p>Initialization: Each trial starts from a small random perturbation around the origin, x_0 drawn from Normal(0, 0.01). Learning rates tested: {0.001, 0.01, 0.05, 0.1, 0.2, 0.5}</p>
+      </article>
+    </section>
+
+    <section id="benchmarks" class="reveal">
+      <h2>Benchmark Functions</h2>
+      <div class="grid-3">
+        <article class="card">
+          <h3>Himmelblau Function</h3>
+          <p><strong>f(x,y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2</strong></p>
+          <p>Used to test escape from a landscape with multiple minima and saddle regions.</p>
+        </article>
+        <article class="card">
+          <h3>Rosenbrock Function</h3>
+          <p><strong>f(x,y) = (1 - x)^2 + 100(y - x^2)^2</strong></p>
+          <p>A narrow curved valley that is notoriously difficult for gradient-based methods.</p>
+        </article>
+        <article class="card">
+          <h3>Ackley Function</h3>
+          <p><strong>f(x) = -20 * exp(-0.2 * sqrt(mean(x_i^2))) - exp(mean(cos(2*pi*x_i))) + 20 + e</strong></p>
+          <p>A highly multimodal function with many local minima and a nearly flat saddle region near the origin.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="results" class="reveal">
+      <article class="card">
+        <h2>SEE Scores at Learning Rate 0.5</h2>
+        <table aria-label="SEE scores at learning rate 0.5">
+          <thead>
+            <tr>
+              <th>Function</th>
+              <th>Fixed LR</th>
+              <th>Adam</th>
+              <th>RMSProp</th>
+              <th>AdaGrad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="label">Himmelblau</td>
+              <td class="see-top">1.0000</td>
+              <td class="see-moderate">0.3086</td>
+              <td class="see-top">1.0000</td>
+              <td class="see-moderate">0.2525</td>
+            </tr>
+            <tr>
+              <td class="label">Rosenbrock</td>
+              <td class="see-good">0.8197</td>
+              <td class="see-fail">0.0000</td>
+              <td class="see-top">1.0000</td>
+              <td class="see-fail">0.0000</td>
+            </tr>
+            <tr>
+              <td class="label">Ackley</td>
+              <td class="see-good">0.8929</td>
+              <td class="see-fail">0.0000</td>
+              <td class="see-top">1.0000</td>
+              <td class="see-fail">0.0000</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <details>
+          <summary>Full SEE Table, Himmelblau</summary>
+          <table aria-label="Full SEE data for Himmelblau">
+            <thead>
+              <tr><th>LR</th><th>Fixed</th><th>Adam</th><th>RMSProp</th><th>AdaGrad</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="label">0.001</td><td class="see-moderate">0.0227</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.01</td><td class="see-moderate">0.1887</td><td class="see-fail">0.0000</td><td class="see-moderate">0.0228</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.05</td><td class="see-good">0.5051</td><td class="see-moderate">0.0367</td><td class="see-moderate">0.2513</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.1</td><td class="see-good">0.9091</td><td class="see-moderate">0.0692</td><td class="see-good">0.5000</td><td class="see-moderate">0.0217</td></tr>
+              <tr><td class="label">0.2</td><td class="see-top">1.0000</td><td class="see-moderate">0.1319</td><td class="see-top">1.0000</td><td class="see-moderate">0.0716</td></tr>
+              <tr><td class="label">0.5</td><td class="see-top">1.0000</td><td class="see-moderate">0.3086</td><td class="see-top">1.0000</td><td class="see-moderate">0.2525</td></tr>
+            </tbody>
+          </table>
+        </details>
+
+        <details>
+          <summary>Full SEE Table, Rosenbrock</summary>
+          <table aria-label="Full SEE data for Rosenbrock">
+            <thead>
+              <tr><th>LR</th><th>Fixed</th><th>Adam</th><th>RMSProp</th><th>AdaGrad</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="label">0.001</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.01</td><td class="see-moderate">0.0028</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.05</td><td class="see-moderate">0.4630</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.1</td><td class="see-good">0.5882</td><td class="see-fail">0.0000</td><td class="see-moderate">0.0100</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.2</td><td class="see-good">0.7246</td><td class="see-fail">0.0000</td><td class="see-top">1.0000</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.5</td><td class="see-good">0.8197</td><td class="see-fail">0.0000</td><td class="see-top">1.0000</td><td class="see-fail">0.0000</td></tr>
+            </tbody>
+          </table>
+        </details>
+
+        <details>
+          <summary>Full SEE Table, Ackley</summary>
+          <table aria-label="Full SEE data for Ackley">
+            <thead>
+              <tr><th>LR</th><th>Fixed</th><th>Adam</th><th>RMSProp</th><th>AdaGrad</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="label">0.001</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.01</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.05</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.1</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.2</td><td class="see-moderate">0.0118</td><td class="see-fail">0.0000</td><td class="see-top">1.0000</td><td class="see-fail">0.0000</td></tr>
+              <tr><td class="label">0.5</td><td class="see-good">0.8929</td><td class="see-fail">0.0000</td><td class="see-top">1.0000</td><td class="see-fail">0.0000</td></tr>
+            </tbody>
+          </table>
+        </details>
+      </article>
+    </section>
+
+    <section id="findings" class="reveal">
+      <h2>Findings</h2>
+      <div class="grid-3">
+        <article class="card">
+          <h3>RMSProp Leads</h3>
+          <p>RMSProp achieved the highest SEE scores across all three benchmark functions. Its adaptive scaling allows for an immediate increase in step size along flat dimensions without the momentum lag that hindered Adam's performance. At a base learning rate of 0.2 or above, RMSProp reached maximum SEE (1.0) on all three functions.</p>
+        </article>
+        <article class="card">
+          <h3>Adam Underperforms</h3>
+          <p>Despite its popularity, Adam showed poor saddle escape efficiency across all tested functions and learning rates. On the Rosenbrock and Ackley functions, Adam achieved SEE = 0 at every learning rate tested. This is attributed to its momentum accumulation, which dampens the directional sensitivity needed to exit flat saddle regions quickly.</p>
+        </article>
+        <article class="card">
+          <h3>No Universal Optimizer</h3>
+          <p>The optimal learning rate framework varies depending on the geometry of the non-convex landscape. SEE is not a static property of an optimizer. It changes based on the function's local curvature, starting point, and escape threshold. This confirms that SEE provides a geometry-aware criterion for selecting optimizers rather than a one-size-fits-all answer.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="citation" class="reveal">
+      <article class="card">
+        <h2>Cite This Paper</h2>
+        <div class="code-block">
+          <button id="copyBtn" type="button">Copy</button>
+<pre id="bibtex">@article{dhiman2026see,
+  title     = {Saddle Escape Efficiency: A Novel Metric to Benchmark
+               Learning Rates in Non-Convex Optimization},
+  author    = {Dhiman, Arnav},
+  year      = {2026},
+  month     = {March},
+  note      = {Independent Research},
+  url       = {https://zenodo.org/records/17702989}
+}</pre>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="container reveal">
+    <p>Arnav Dhiman, Independent Researcher, 2026</p>
+    <p><a href="https://zenodo.org/records/17702989" target="_blank" rel="noopener noreferrer">View on Zenodo</a></p>
+  </footer>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+
+    const copyBtn = document.getElementById('copyBtn');
+    const bibtex = document.getElementById('bibtex');
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(bibtex.innerText);
+      } catch (err) {
+        const textArea = document.createElement('textarea');
+        textArea.value = bibtex.innerText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        copyBtn.textContent = 'Copy';
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
